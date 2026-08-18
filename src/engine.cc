@@ -280,7 +280,14 @@ void ValueOnlyGo(NodeTree* tree, Network* network, const OptionsDict& options,
 
   const auto& board = tree->GetPositionHistory().Last().GetBoard();
   auto legal_moves = board.GenerateLegalMoves();
-  tree->GetCurrentHead()->CreateEdges(legal_moves);
+  
+  // Fix for non-existent CreateEdges method: attach a LowNode with legal_moves if missing
+  if (!tree->GetCurrentHead()->GetLowNode()) {
+    auto hash = GetHistoryHash(tree->GetPositionHistory());
+    auto* low_node = tree->NonTTAddClone(LowNode(hash, legal_moves));
+    tree->GetCurrentHead()->SetLowNode(low_node);
+  }
+
   PositionHistory history = tree->GetPositionHistory();
   std::vector<InputPlanes> planes;
   int transform;
